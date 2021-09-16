@@ -18,19 +18,26 @@
  */
 
 import {
+  ClampToEdgeWrapping,
   Clock,
+  DataTexture,
+  FloatType,
   Mesh,
+  NearestFilter,
   Object3D,
   PlaneBufferGeometry,
   RawShaderMaterial,
+  RGBAFormat,
   WebGLRenderer,
 } from 'three'
 import debugVertexShader from '@/lib/graphics/shaders/raw/gpu-debug/vs-debug.glsl'
 import debugFragmentShader from '@/lib/graphics/shaders/raw/gpu-debug/fs-debug.glsl'
 
+import { getTextureDimensionsPot } from '@siroko/math'
+
 class GPUSimulation extends Object3D {
   private debugMesh?: Mesh<PlaneBufferGeometry, RawShaderMaterial>
-
+  private dataTexture?: DataTexture
   constructor(
     private renderer: WebGLRenderer,
     private particleCount: number,
@@ -42,14 +49,39 @@ class GPUSimulation extends Object3D {
   }
 
   private setup(): void {
-    console.log('Hi world')
+    const textureDimensions = getTextureDimensionsPot(this.particleCount)
+    const totalPot: number = textureDimensions[0] * textureDimensions[1]
+    const positions: Float32Array = new Float32Array(totalPot * 4)
+
+    for (let i = 0; i < this.particleCount; i++) {
+      positions[i * 4] = (Math.random() - 0.5) * 2
+      positions[i * 4 + 1] = 0
+      positions[i * 4 + 2] = (Math.random() - 0.5) * 2
+      positions[i * 4 + 3] = 1
+    }
+
+    this.dataTexture = new DataTexture(
+      positions,
+      textureDimensions[0],
+      textureDimensions[1],
+      RGBAFormat,
+      FloatType,
+      undefined,
+      ClampToEdgeWrapping,
+      ClampToEdgeWrapping,
+      NearestFilter,
+      NearestFilter
+    )
   }
 
   private debugSetup() {
-    const geo: PlaneBufferGeometry = new PlaneBufferGeometry(1, 1, 1, 1)
+    const geo: PlaneBufferGeometry = new PlaneBufferGeometry(2, 2, 1, 1)
     const mat: RawShaderMaterial = new RawShaderMaterial({
       vertexShader: debugVertexShader,
       fragmentShader: debugFragmentShader,
+      uniforms: {
+        uTexture: { value: this.dataTexture },
+      },
     })
 
     this.debugMesh = new Mesh(geo, mat)
