@@ -41,6 +41,7 @@ class MainScene extends ThreeBase {
   private update(): void {
     this.raf = requestAnimationFrame(this.rafHandler)
     this.controls?.update()
+    this.gpuSimulation?.update()
     this.render()
   }
 

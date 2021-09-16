@@ -29,15 +29,25 @@ import {
   RawShaderMaterial,
   RGBAFormat,
   WebGLRenderer,
+  WebGLRenderTarget,
 } from 'three'
+
 import debugVertexShader from '@/lib/graphics/shaders/raw/gpu-debug/vs-debug.glsl'
 import debugFragmentShader from '@/lib/graphics/shaders/raw/gpu-debug/fs-debug.glsl'
 
+import updatePositionsVertex from '@/lib/graphics/shaders/raw/gpu-simulation/vs-base.glsl'
+import updatePositionsFragment from '@/lib/graphics/shaders/raw/gpu-simulation/fs-update-positions.glsl'
+
 import { getTextureDimensionsPot } from '@siroko/math'
+import PingPongRenderTarget from './PingPongRendertarget'
 
 class GPUSimulation extends Object3D {
   private debugMesh?: Mesh<PlaneBufferGeometry, RawShaderMaterial>
   private dataTexture?: DataTexture
+  private positionsPingpong?: PingPongRenderTarget
+  private currentPositionRendertarget?: WebGLRenderTarget
+  private updatePositionsMaterial?: RawShaderMaterial
+
   constructor(
     private renderer: WebGLRenderer,
     private particleCount: number,
@@ -45,7 +55,17 @@ class GPUSimulation extends Object3D {
   ) {
     super()
     this.setup()
+    this.setupMaterials()
     this.debugSetup()
+  }
+
+  public update() {
+    this.currentPositionRendertarget = this.positionsPingpong?.pass(
+      this.updatePositionsMaterial!
+    )
+    this.updatePositionsMaterial!.uniforms.uPositionsTexture.value = this.currentPositionRendertarget!.texture
+    this.updatePositionsMaterial!.uniforms.uTime.value = this.clock.getElapsedTime()
+    this.debugMesh!.material.uniforms.uTexture.value = this.currentPositionRendertarget!.texture
   }
 
   private setup(): void {
@@ -72,6 +92,11 @@ class GPUSimulation extends Object3D {
       NearestFilter,
       NearestFilter
     )
+
+    this.positionsPingpong = new PingPongRenderTarget(
+      textureDimensions,
+      this.renderer
+    )
   }
 
   private debugSetup() {
@@ -86,6 +111,17 @@ class GPUSimulation extends Object3D {
 
     this.debugMesh = new Mesh(geo, mat)
     this.add(this.debugMesh)
+  }
+
+  private setupMaterials() {
+    this.updatePositionsMaterial = new RawShaderMaterial({
+      vertexShader: updatePositionsVertex,
+      fragmentShader: updatePositionsFragment,
+      uniforms: {
+        uPositionsTexture: { value: this.dataTexture },
+        uTime: { value: 0 },
+      },
+    })
   }
 }
 
