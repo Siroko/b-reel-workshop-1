@@ -39,23 +39,28 @@ import updatePositionsVertex from '@/lib/graphics/shaders/raw/gpu-simulation/vs-
 import updatePositionsFragment from '@/lib/graphics/shaders/raw/gpu-simulation/fs-update-positions.glsl'
 
 import { getTextureDimensionsPot } from '@siroko/math'
-import PingPongRenderTarget from './PingPongRendertarget'
+import PingPongRenderTarget from './PingPongRenderTarget'
 
 class GPUSimulation extends Object3D {
+  public textureDimensions?: Array<number>
+  public currentPositionRendertarget?: WebGLRenderTarget
+
   private debugMesh?: Mesh<PlaneBufferGeometry, RawShaderMaterial>
   private dataTexture?: DataTexture
   private positionsPingpong?: PingPongRenderTarget
-  private currentPositionRendertarget?: WebGLRenderTarget
   private updatePositionsMaterial?: RawShaderMaterial
 
   constructor(
+    public particleCount: number,
     private renderer: WebGLRenderer,
-    private particleCount: number,
     private clock: Clock
   ) {
     super()
     this.setup()
     this.setupMaterials()
+    this.currentPositionRendertarget = this.positionsPingpong?.pass(
+      this.updatePositionsMaterial!
+    )
     this.debugSetup()
   }
 
@@ -69,21 +74,22 @@ class GPUSimulation extends Object3D {
   }
 
   private setup(): void {
-    const textureDimensions = getTextureDimensionsPot(this.particleCount)
-    const totalPot: number = textureDimensions[0] * textureDimensions[1]
+    this.textureDimensions = getTextureDimensionsPot(this.particleCount)
+    const totalPot: number =
+      this.textureDimensions![0] * this.textureDimensions![1]
     const positions: Float32Array = new Float32Array(totalPot * 4)
 
     for (let i = 0; i < this.particleCount; i++) {
-      positions[i * 4] = (Math.random() - 0.5) * 2
+      positions[i * 4] = (Math.random() - 0.5) * 2 * 100
       positions[i * 4 + 1] = 0
-      positions[i * 4 + 2] = (Math.random() - 0.5) * 2
+      positions[i * 4 + 2] = (Math.random() - 0.5) * 2 * 100
       positions[i * 4 + 3] = 1
     }
 
     this.dataTexture = new DataTexture(
       positions,
-      textureDimensions[0],
-      textureDimensions[1],
+      this.textureDimensions![0],
+      this.textureDimensions![1],
       RGBAFormat,
       FloatType,
       undefined,
@@ -94,7 +100,7 @@ class GPUSimulation extends Object3D {
     )
 
     this.positionsPingpong = new PingPongRenderTarget(
-      textureDimensions,
+      this.textureDimensions!,
       this.renderer
     )
   }
@@ -110,7 +116,7 @@ class GPUSimulation extends Object3D {
     })
 
     this.debugMesh = new Mesh(geo, mat)
-    this.add(this.debugMesh)
+    // this.add(this.debugMesh)
   }
 
   private setupMaterials() {

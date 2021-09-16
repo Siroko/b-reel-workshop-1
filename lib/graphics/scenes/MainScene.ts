@@ -20,6 +20,7 @@
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Pane } from 'tweakpane'
 import ThreeBase from '../core/ThreeBase'
+import GPURendering from '../gpu/sim/GPURendering'
 import GPUSimulation from '../gpu/sim/GPUSimulation'
 
 class MainScene extends ThreeBase {
@@ -28,6 +29,7 @@ class MainScene extends ThreeBase {
   private controls?: OrbitControls
   private debug: boolean = true
   private gpuSimulation?: GPUSimulation
+  private gpuRendering?: GPURendering
 
   constructor(width: number, height: number, container: Element) {
     super(width, height, container)
@@ -47,8 +49,10 @@ class MainScene extends ThreeBase {
 
   private setup(): void {
     this.renderer.setClearColor(0x343434)
-    this.gpuSimulation = new GPUSimulation(this.renderer, 8, this.clock)
+    this.gpuSimulation = new GPUSimulation(500000, this.renderer, this.clock)
+    this.gpuRendering = new GPURendering(this.gpuSimulation)
     this.scene.add(this.gpuSimulation)
+    this.scene.add(this.gpuRendering)
   }
 
   private setupControls(): void {
