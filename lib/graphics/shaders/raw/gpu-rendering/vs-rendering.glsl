@@ -15,5 +15,5 @@ void main() {
   vec4 projectedVert = projectionMatrix * viewMatrix * modelMatrix * vec4(pos.xyz, 1.0);
 
   gl_Position = projectedVert;
-  gl_PointSize = 1.0;
+  gl_PointSize = 5.0;
 }

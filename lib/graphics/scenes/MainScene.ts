@@ -44,12 +44,13 @@ class MainScene extends ThreeBase {
     this.raf = requestAnimationFrame(this.rafHandler)
     this.controls?.update()
     this.gpuSimulation?.update()
+    this.gpuRendering?.update()
     this.render()
   }
 
   private setup(): void {
     this.renderer.setClearColor(0x343434)
-    this.gpuSimulation = new GPUSimulation(500000, this.renderer, this.clock)
+    this.gpuSimulation = new GPUSimulation(5000, this.renderer, this.clock)
     this.gpuRendering = new GPURendering(this.gpuSimulation)
     this.scene.add(this.gpuSimulation)
     this.scene.add(this.gpuRendering)
@@ -70,6 +71,42 @@ class MainScene extends ThreeBase {
   private setupGui() {
     const pane = new Pane({ expanded: true })
     pane.element.parentElement!.style.display = 'contents'
+
+    pane.addInput(this.gpuSimulation!, 'alignFactor', {
+      min: 0,
+      max: 3,
+      step: 0.001,
+    })
+    pane.addInput(this.gpuSimulation!, 'cohesionFactor', {
+      min: 0,
+      max: 3,
+      step: 0.001,
+    })
+    pane.addInput(this.gpuSimulation!, 'separationFactor', {
+      min: 1,
+      max: 10,
+      step: 0.001,
+    })
+    pane.addInput(this.gpuSimulation!, 'forceToCenterFactor', {
+      min: 0,
+      max: 10.0,
+      step: 0.00001,
+    })
+    pane.addInput(this.gpuSimulation!, 'maxSpeed', {
+      min: 0,
+      max: 400,
+      step: 0.001,
+    })
+    pane.addInput(this.gpuSimulation!, 'maxForce', {
+      min: 0,
+      max: 40,
+      step: 0.001,
+    })
+    pane.addInput(this.gpuSimulation!, 'range', {
+      min: 0,
+      max: 20,
+      step: 0.001,
+    })
   }
 }
 

@@ -28,6 +28,7 @@ import {
   PlaneBufferGeometry,
   RawShaderMaterial,
   RGBAFormat,
+  Vector2,
   WebGLRenderer,
   WebGLRenderTarget,
 } from 'three'
@@ -37,6 +38,7 @@ import debugFragmentShader from '@/lib/graphics/shaders/raw/gpu-debug/fs-debug.g
 
 import updatePositionsVertex from '@/lib/graphics/shaders/raw/gpu-simulation/vs-base.glsl'
 import updatePositionsFragment from '@/lib/graphics/shaders/raw/gpu-simulation/fs-update-positions.glsl'
+import updateVelocitiesFragment from '@/lib/graphics/shaders/raw/gpu-simulation/fs-update-velocities.glsl'
 
 import { getTextureDimensionsPot } from '@siroko/math'
 import PingPongRenderTarget from './PingPongRenderTarget'
@@ -46,9 +48,24 @@ class GPUSimulation extends Object3D {
   public currentPositionRendertarget?: WebGLRenderTarget
 
   private debugMesh?: Mesh<PlaneBufferGeometry, RawShaderMaterial>
-  private dataTexture?: DataTexture
+  private positionsDataTexture?: DataTexture
   private positionsPingpong?: PingPongRenderTarget
   private updatePositionsMaterial?: RawShaderMaterial
+
+  private velocitiesDataTexture?: DataTexture
+  private velocitiesPingpong?: PingPongRenderTarget
+  private updateVelocitiesMaterial?: RawShaderMaterial
+  private currentVelocitiesRendertarget?: WebGLRenderTarget
+
+  public alignFactor: number = 2.32
+  public cohesionFactor: number = 1.962
+  public separationFactor: number = 2.091
+  public forceToCenterFactor: number = 0.1256
+  public rangeAlign: number = 6.38
+  public rangeCohesion: number = 6.38
+  public range: number = 5.38
+  public maxSpeed: number = 70
+  public maxForce: number = 4.448
 
   constructor(
     public particleCount: number,
@@ -58,19 +75,41 @@ class GPUSimulation extends Object3D {
     super()
     this.setup()
     this.setupMaterials()
-    this.currentPositionRendertarget = this.positionsPingpong?.pass(
-      this.updatePositionsMaterial!
-    )
+    this.updateRenderTargets()
     this.debugSetup()
   }
 
   public update() {
+    this.updateRenderTargets()
+
+    this.updatePositionsMaterial!.uniforms.uPositionsTexture.value = this.currentPositionRendertarget!.texture
+    this.updatePositionsMaterial!.uniforms.uVelocitiesTexture.value = this.currentVelocitiesRendertarget!.texture
+    this.updatePositionsMaterial!.uniforms.uDeltaTime.value = this.clock.getDelta()
+    this.updatePositionsMaterial!.uniforms.uTime.value = this.clock.getElapsedTime()
+
+    this.updateVelocitiesMaterial!.uniforms.uPositionsTexture.value = this.currentPositionRendertarget!.texture
+    this.updateVelocitiesMaterial!.uniforms.uVelocitiesTexture.value = this.currentVelocitiesRendertarget!.texture
+    this.updateVelocitiesMaterial!.uniforms.uDeltaTime.value = this.clock.getDelta()
+    this.updateVelocitiesMaterial!.uniforms.uTime.value = this.clock.getElapsedTime()
+    this.updateVelocitiesMaterial!.uniforms.uTotalParticles.value = this.particleCount
+    this.updateVelocitiesMaterial!.uniforms.uAlignFactor.value = this.alignFactor
+    this.updateVelocitiesMaterial!.uniforms.uCohesionFactor.value = this.cohesionFactor
+    this.updateVelocitiesMaterial!.uniforms.uSeparationFactor.value = this.separationFactor
+    this.updateVelocitiesMaterial!.uniforms.uForceToCenterFactor.value = this.forceToCenterFactor
+    this.updateVelocitiesMaterial!.uniforms.uRange.value = this.range
+    this.updateVelocitiesMaterial!.uniforms.uMaxSpeed.value = this.maxSpeed
+    this.updateVelocitiesMaterial!.uniforms.uMaxForce.value = this.maxForce
+
+    this.debugMesh!.material.uniforms.uTexture.value = this.currentVelocitiesRendertarget!.texture
+  }
+
+  private updateRenderTargets() {
     this.currentPositionRendertarget = this.positionsPingpong?.pass(
       this.updatePositionsMaterial!
     )
-    this.updatePositionsMaterial!.uniforms.uPositionsTexture.value = this.currentPositionRendertarget!.texture
-    this.updatePositionsMaterial!.uniforms.uTime.value = this.clock.getElapsedTime()
-    this.debugMesh!.material.uniforms.uTexture.value = this.currentPositionRendertarget!.texture
+    this.currentVelocitiesRendertarget = this.velocitiesPingpong?.pass(
+      this.updateVelocitiesMaterial!
+    )
   }
 
   private setup(): void {
@@ -86,7 +125,7 @@ class GPUSimulation extends Object3D {
       positions[i * 4 + 3] = 1
     }
 
-    this.dataTexture = new DataTexture(
+    this.positionsDataTexture = new DataTexture(
       positions,
       this.textureDimensions![0],
       this.textureDimensions![1],
@@ -103,6 +142,33 @@ class GPUSimulation extends Object3D {
       this.textureDimensions!,
       this.renderer
     )
+
+    const velocities: Float32Array = new Float32Array(totalPot * 4)
+
+    for (let i = 0; i < this.particleCount; i++) {
+      velocities[i * 4] = (Math.random() - 0.5) * 2
+      velocities[i * 4 + 1] = 0
+      velocities[i * 4 + 2] = (Math.random() - 0.5) * 2
+      velocities[i * 4 + 3] = 1
+    }
+
+    this.velocitiesDataTexture = new DataTexture(
+      velocities,
+      this.textureDimensions![0],
+      this.textureDimensions![1],
+      RGBAFormat,
+      FloatType,
+      undefined,
+      ClampToEdgeWrapping,
+      ClampToEdgeWrapping,
+      NearestFilter,
+      NearestFilter
+    )
+
+    this.velocitiesPingpong = new PingPongRenderTarget(
+      this.textureDimensions!,
+      this.renderer
+    )
   }
 
   private debugSetup() {
@@ -111,7 +177,7 @@ class GPUSimulation extends Object3D {
       vertexShader: debugVertexShader,
       fragmentShader: debugFragmentShader,
       uniforms: {
-        uTexture: { value: this.dataTexture },
+        uTexture: { value: this.currentPositionRendertarget!.texture },
       },
     })
 
@@ -124,8 +190,37 @@ class GPUSimulation extends Object3D {
       vertexShader: updatePositionsVertex,
       fragmentShader: updatePositionsFragment,
       uniforms: {
-        uPositionsTexture: { value: this.dataTexture },
+        uPositionsTexture: { value: this.positionsDataTexture },
+        uVelocitiesTexture: { value: this.velocitiesDataTexture },
         uTime: { value: 0 },
+        uDeltaTime: { value: this.clock.getDelta() },
+      },
+    })
+
+    const resolution: Vector2 = new Vector2(
+      window.innerWidth,
+      window.innerHeight
+    )
+
+    this.updateVelocitiesMaterial = new RawShaderMaterial({
+      vertexShader: updatePositionsVertex,
+      fragmentShader: updateVelocitiesFragment,
+      uniforms: {
+        uPositionsTexture: { value: this.positionsDataTexture },
+        uVelocitiesTexture: { value: this.velocitiesDataTexture },
+        uTime: { value: 0 },
+        uResolution: {
+          value: resolution,
+        },
+        uDeltaTime: { value: this.clock.getDelta() },
+        uTotalParticles: { value: this.particleCount },
+        uAlignFactor: { value: this.alignFactor },
+        uCohesionFactor: { value: this.cohesionFactor },
+        uSeparationFactor: { value: this.separationFactor },
+        uForceToCenterFactor: { value: this.forceToCenterFactor },
+        uRange: { value: this.range },
+        uMaxSpeed: { value: this.maxSpeed },
+        uMaxForce: { value: this.maxForce },
       },
     })
   }

@@ -2,7 +2,9 @@
 precision highp float;
 
 uniform sampler2D uPositionsTexture;
+uniform sampler2D uVelocitiesTexture;
 uniform float uTime;
+uniform float uDeltaTime;
 
 in vec2 vUv;
 out vec4 outColor;
@@ -10,7 +12,9 @@ out vec4 outColor;
 void main() {
 
   vec4 positions = texture(uPositionsTexture, vUv);
-  positions.y += (sin(uTime) * 0.01) * cos(positions.x * 0.1) * 100.0;
+  vec4 velocity = texture(uVelocitiesTexture, vUv);
+
+  positions.xyz += velocity.xyz * uDeltaTime;
 
   outColor = positions;
 }
