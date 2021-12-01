@@ -57,15 +57,15 @@ class GPUSimulation extends Object3D {
   private updateVelocitiesMaterial?: RawShaderMaterial
   private currentVelocitiesRendertarget?: WebGLRenderTarget
 
-  public alignFactor: number = 2.32
-  public cohesionFactor: number = 1.962
-  public separationFactor: number = 2.091
-  public forceToCenterFactor: number = 0.1256
+  public alignFactor: number = 1.766
+  public cohesionFactor: number = 1.733
+  public separationFactor: number = 3.07
+  public forceToCenterFactor: number = 0.0169
   public rangeAlign: number = 6.38
   public rangeCohesion: number = 6.38
-  public range: number = 5.38
-  public maxSpeed: number = 70
-  public maxForce: number = 4.448
+  public range: number = 6.121
+  public maxSpeed: number = 26.766
+  public maxForce: number = 0.938
 
   constructor(
     public particleCount: number,
@@ -122,7 +122,7 @@ class GPUSimulation extends Object3D {
       positions[i * 4] = (Math.random() - 0.5) * 2 * 100
       positions[i * 4 + 1] = 0
       positions[i * 4 + 2] = (Math.random() - 0.5) * 2 * 100
-      positions[i * 4 + 3] = 1
+      positions[i * 4 + 3] = Math.random()
     }
 
     this.positionsDataTexture = new DataTexture(
@@ -149,7 +149,7 @@ class GPUSimulation extends Object3D {
       velocities[i * 4] = (Math.random() - 0.5) * 2
       velocities[i * 4 + 1] = 0
       velocities[i * 4 + 2] = (Math.random() - 0.5) * 2
-      velocities[i * 4 + 3] = 1
+      velocities[i * 4 + 3] = Math.random()
     }
 
     this.velocitiesDataTexture = new DataTexture(
@@ -198,8 +198,8 @@ class GPUSimulation extends Object3D {
     })
 
     const resolution: Vector2 = new Vector2(
-      window.innerWidth,
-      window.innerHeight
+      this.textureDimensions![0],
+      this.textureDimensions![1]
     )
 
     this.updateVelocitiesMaterial = new RawShaderMaterial({

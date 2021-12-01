@@ -125,7 +125,7 @@ float typeFactor = getTypeFactor(mePosition.w) + 1.0;
 
   float strengthType = typeFactor * 50.0;
   float distanceToCenter = distance(vec3(0.0), mePosition.xyz);
-  float influenceZone = smoothstep(-3.0 * strengthType, 500.0, distanceToCenter);
+  float influenceZone = smoothstep(0.0, 500.0, distanceToCenter);
   acc += (normalize(vec3(0.0) - mePosition.xyz) * uForceToCenterFactor * influenceZone * strengthType);
 
   // Add acceleration (composite of all the steering forces) to the current velocity.

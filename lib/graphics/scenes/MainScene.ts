@@ -50,7 +50,7 @@ class MainScene extends ThreeBase {
 
   private setup(): void {
     this.renderer.setClearColor(0x343434)
-    this.gpuSimulation = new GPUSimulation(5000, this.renderer, this.clock)
+    this.gpuSimulation = new GPUSimulation(8192, this.renderer, this.clock)
     this.gpuRendering = new GPURendering(this.gpuSimulation)
     this.scene.add(this.gpuSimulation)
     this.scene.add(this.gpuRendering)
