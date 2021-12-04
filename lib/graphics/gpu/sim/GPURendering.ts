@@ -18,11 +18,12 @@
  */
 
 import {
-  BufferAttribute,
+  InstancedBufferAttribute,
   BufferGeometry,
+  InstancedMesh,
   Object3D,
-  Points,
   RawShaderMaterial,
+  SphereBufferGeometry,
 } from 'three'
 
 import renderingVertex from '@/lib/graphics/shaders/raw/gpu-rendering/vs-rendering.glsl'
@@ -31,7 +32,7 @@ import renderingFragment from '@/lib/graphics/shaders/raw/gpu-rendering/fs-rende
 import GPUSimulation from './GPUSimulation'
 
 class GPURendering extends Object3D {
-  private mesh?: Points<BufferGeometry, RawShaderMaterial>
+  private mesh?: InstancedMesh<BufferGeometry, RawShaderMaterial>
 
   constructor(private gpuSimulation: GPUSimulation) {
     super()
@@ -43,7 +44,7 @@ class GPURendering extends Object3D {
   }
 
   private setup(): void {
-    const geo: BufferGeometry = new BufferGeometry()
+    const geo: SphereBufferGeometry = new SphereBufferGeometry(1, 10, 10)
     const mat: RawShaderMaterial = new RawShaderMaterial({
       vertexShader: renderingVertex,
       fragmentShader: renderingFragment,
@@ -54,15 +55,7 @@ class GPURendering extends Object3D {
       },
     })
 
-    geo.setAttribute(
-      'position',
-      new BufferAttribute(
-        new Float32Array(this.gpuSimulation.particleCount * 4),
-        4
-      )
-    )
-
-    const i2uvBuffer: BufferAttribute = new BufferAttribute(
+    const i2uvBuffer: InstancedBufferAttribute = new InstancedBufferAttribute(
       new Float32Array(this.gpuSimulation.particleCount * 2),
       2
     )
@@ -71,9 +64,9 @@ class GPURendering extends Object3D {
     for (let i = 0; i < this.gpuSimulation.particleCount; i++) {
       i2uvBuffer.setXY(i, (i % td[0]) / td[0], Math.floor(i / td[0]) / td[1])
     }
-    geo.setAttribute('i2uv', i2uvBuffer)
 
-    this.mesh = new Points(geo, mat)
+    geo.setAttribute('i2uv', i2uvBuffer)
+    this.mesh = new InstancedMesh(geo, mat, this.gpuSimulation.particleCount)
 
     this.add(this.mesh)
   }

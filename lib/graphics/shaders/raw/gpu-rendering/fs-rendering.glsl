@@ -5,16 +5,13 @@ in vec2 vUv;
 in vec4 vPosition;
 out vec4 outColor;
 
+vec3 pal( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d ) {
+    return a + b*cos( 6.28318*(c*t+d) );
+}
+
 void main() {
-  
-  vec4 c1 = vec4(1.0, 0.5, 0.0, 1.0);
-  vec4 c2 = vec4(0.0, 1.0, 1.0, 1.0);
-  vec4 c3 = vec4(0.0, 0.5, 1.0, 1.0);
-  vec4 c4 = vec4(0.5, 1.0, 0.5, 1.0);
 
-  vec4 fColor = mix(c1, c2, step(0.25, vPosition.a));
-  fColor = mix(fColor, c3, step(0.5, vPosition.a));
-  fColor = mix(fColor, c4, step(0.75, vPosition.a));
+  vec3 fColor = pal( vPosition.a, vec3(0.5,0.5,0.5), vec3(0.5,0.5,0.5), vec3(1.0,1.0,1.0), vec3(0.4,0.10,0.20) );
 
-  outColor = fColor;
+  outColor = vec4(fColor, 1.0);
 }

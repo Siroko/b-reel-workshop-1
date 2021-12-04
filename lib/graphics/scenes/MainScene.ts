@@ -61,8 +61,8 @@ class MainScene extends ThreeBase {
     this.controls.dampingFactor = 0.09
     this.controls.enableDamping = true
     this.controls.screenSpacePanning = false
-    this.controls.minDistance = 100
-    this.controls.maxDistance = 300
+    this.controls.minDistance = 400
+    this.controls.maxDistance = 700
     this.controls.maxPolarAngle = Math.PI / 2
     this.controls.rotateSpeed = 0.5
     this.controls.target.y = 0

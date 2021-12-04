@@ -16,5 +16,5 @@ void main() {
 
   positions.xyz += velocity.xyz * uDeltaTime;
 
-  outColor = positions;
+  outColor = vec4(positions.xyz, velocity.w);
 }

@@ -119,9 +119,9 @@ class GPUSimulation extends Object3D {
     const positions: Float32Array = new Float32Array(totalPot * 4)
 
     for (let i = 0; i < this.particleCount; i++) {
-      positions[i * 4] = (Math.random() - 0.5) * 2 * 100
+      positions[i * 4] = (Math.random() - 0.5) * 2 * 500
       positions[i * 4 + 1] = 0
-      positions[i * 4 + 2] = (Math.random() - 0.5) * 2 * 100
+      positions[i * 4 + 2] = (Math.random() - 0.5) * 2 * 500
       positions[i * 4 + 3] = Math.random()
     }
 
@@ -146,10 +146,11 @@ class GPUSimulation extends Object3D {
     const velocities: Float32Array = new Float32Array(totalPot * 4)
 
     for (let i = 0; i < this.particleCount; i++) {
+      const norm = i / this.particleCount
       velocities[i * 4] = (Math.random() - 0.5) * 2
       velocities[i * 4 + 1] = 0
       velocities[i * 4 + 2] = (Math.random() - 0.5) * 2
-      velocities[i * 4 + 3] = Math.random()
+      velocities[i * 4 + 3] = Math.random() * Math.pow(norm, 4)
     }
 
     this.velocitiesDataTexture = new DataTexture(
