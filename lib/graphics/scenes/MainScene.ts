@@ -19,6 +19,11 @@
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Pane } from 'tweakpane'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import { TAARenderPass } from 'three/examples/jsm/postprocessing/TAARenderPass.js'
+import { Vector2 } from 'three'
 import ThreeBase from '../core/ThreeBase'
 import GPURendering from '../gpu/sim/GPURendering'
 import GPUSimulation from '../gpu/sim/GPUSimulation'
@@ -30,12 +35,14 @@ class MainScene extends ThreeBase {
   private debug: boolean = true
   private gpuSimulation?: GPUSimulation
   private gpuRendering?: GPURendering
+  private composer?: EffectComposer
 
   constructor(width: number, height: number, container: Element) {
     super(width, height, container)
     this.rafHandler = this.update.bind(this)
     this.setup()
     this.setupControls()
+    this.setupPostprocessing()
     this.setupGui()
     this.update()
   }
@@ -45,7 +52,7 @@ class MainScene extends ThreeBase {
     this.controls?.update()
     this.gpuSimulation?.update()
     this.gpuRendering?.update()
-    this.render()
+    this.composer!.render()
   }
 
   private setup(): void {
@@ -62,10 +69,24 @@ class MainScene extends ThreeBase {
     this.controls.enableDamping = true
     this.controls.screenSpacePanning = false
     this.controls.minDistance = 400
-    this.controls.maxDistance = 700
+    this.controls.maxDistance = 1400
     this.controls.maxPolarAngle = Math.PI / 2
     this.controls.rotateSpeed = 0.5
     this.controls.target.y = 0
+  }
+
+  private setupPostprocessing() {
+    this.composer = new EffectComposer(this.renderer)
+    const renderPass = new RenderPass(this.scene, this.camera)
+    this.composer.addPass(renderPass)
+
+    const bloomPass = new UnrealBloomPass(
+      new Vector2(window.innerWidth, window.innerHeight),
+      0.8,
+      0.2,
+      0.5
+    )
+    this.composer.addPass(bloomPass)
   }
 
   private setupGui() {

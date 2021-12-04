@@ -43,7 +43,9 @@ export default class ThreeBase {
     this.renderer = new WebGLRenderer({
       context: this.gl,
       canvas: this.canvas,
+      antialias: true,
     })
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.4))
     this.camera = new PerspectiveCamera(60, width / height, 0.1, 10000)
     this.container.appendChild(this.renderer.domElement)
 

@@ -44,7 +44,7 @@ class GPURendering extends Object3D {
   }
 
   private setup(): void {
-    const geo: SphereBufferGeometry = new SphereBufferGeometry(1, 10, 10)
+    const geo: SphereBufferGeometry = new SphereBufferGeometry(3, 4, 2)
     const mat: RawShaderMaterial = new RawShaderMaterial({
       vertexShader: renderingVertex,
       fragmentShader: renderingFragment,

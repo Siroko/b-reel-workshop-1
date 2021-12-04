@@ -48,9 +48,9 @@ vec3 limit(vec3 v, float limit) {
 
 float getTypeFactor(float v) {
   float typeFactor = mix(0.0, 0.25, step(0.05, v));
-  typeFactor = mix(typeFactor, 6.5, step(0.5, v));
-  typeFactor = mix(typeFactor, 10.75, step(0.75, v));
-  typeFactor = mix(typeFactor, 6.0, step(1.0, v));
+  typeFactor = mix(typeFactor, 9.5, step(0.5, v));
+  typeFactor = mix(typeFactor, 15.75, step(0.75, v));
+  typeFactor = mix(typeFactor, 9.0, step(1.0, v));
 
   return typeFactor;
 }
